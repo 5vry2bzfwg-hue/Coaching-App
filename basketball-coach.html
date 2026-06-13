@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basketball Coach Planner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --court: #1a1a2e;
+    --court-mid: #16213e;
+    --court-line: #0f3460;
+    --orange: #e94f0e;
+    --orange-soft: #f47044;
+    --chalk: #f0ece2;
+    --chalk-dim: #b8b4a8;
+    --green: #2ecc71;
+    --blue: #3498db;
+    --purple: #9b59b6;
+    --yellow: #f1c40f;
+    --red: #e74c3c;
+    --card: #1e2a45;
+    --border: #2a3a5c;
+    --text: #f0ece2;
+    --text-dim: #8892a4;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--court);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--court-mid);
+    border-bottom: 3px solid var(--orange);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 10px;
+  }
+  .header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--chalk);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .header-title span { color: var(--orange); }
+  .header-team-tabs { display: flex; gap: 5px; }
+  .team-tab {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .team-tab.active, .team-tab:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: rgba(233,79,14,0.1);
+  }
+
+  /* NAV */
+  .nav {
+    background: var(--court-mid);
+    border-bottom: 1px solid var(--border);
+    padding: 0 8px;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 13px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nav-btn.active { color: var(--chalk); border-bottom-color: var(--orange); }
+  .nav-btn:hover { color: var(--chalk); }
+
+  /* MAIN */
+  .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* SECTION HEADERS */
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: var(--chalk);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .tag-orange { background: rgba(233,79,14,0.2); color: var(--orange); }
+  .tag-green  { background: rgba(46,204,113,0.2); color: var(--green); }
+  .tag-blue   { background: rgba(52,152,219,0.2); color: var(--blue); }
+  .tag-purple { background: rgba(155,89,182,0.2); color: var(--purple); }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--chalk);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* FORM */
+  input[type=text], input[type=url], textarea, select {
+    background: var(--court);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input[type=text]:focus, input[type=url]:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--orange);
+  }
+  textarea { resize: vertical; min-height: 72px; }
+  select option { background: var(--court-mid); }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  .field { margin-bottom: 14px; }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary { background: var(--orange); color: white; }
+  .btn-primary:hover { background: var(--orange-soft); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--chalk); color: var(--chalk); }
+  .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: white; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* ===== BLOCK PAGE ===== */
+  .block-header {
+    background: linear-gradient(135deg, var(--court-line), var(--court-mid));
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--orange);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .block-header h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 26px;
+    color: var(--chalk);
+  }
+  .focus-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .focus-pill {
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(233,79,14,0.15);
+    border: 1px solid rgba(233,79,14,0.4);
+    color: var(--orange-soft);
+  }
+  .focus-number {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: rgba(233,79,14,0.2);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  /* ===== SESSION PLANNER ===== */
+  .week-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .week-tab {
+    padding: 7px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .week-tab.active { background: var(--orange); border-color: var(--orange); color: white; }
+  .week-tab:hover:not(.active) { border-color: var(--orange); color: var(--orange); }
+
+  .session-timeline { display: flex; flex-direction: column; gap: 7px; }
+
+  .session-slot {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .slot-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    text-align: center;
+    min-height: 66px;
+  }
+  .slot-time .mins { font-size: 20px; line-height: 1; }
+  .slot-time .mins-label { font-size: 9px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+  .slot-time .slot-label { font-size: 9px; opacity: 0.8; margin-top: 3px; }
+
+  .slot-warmup    .slot-time { background: rgba(241,196,15,0.12); color: var(--yellow); }
+  .slot-offense   .slot-time { background: rgba(233,79,14,0.12);  color: var(--orange); }
+  .slot-defense   .slot-time { background: rgba(52,152,219,0.12); color: var(--blue); }
+  .slot-structure .slot-time { background: rgba(155,89,182,0.12); color: var(--purple); }
+  .slot-scrimmage .slot-time { background: rgba(46,204,113,0.12); color: var(--green); }
+  .slot-cooldown  .slot-time { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+
+  .slot-content {
+    background: var(--card);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .slot-content-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .slot-drill-name { font-weight: 600; font-size: 13px; color: var(--chalk); flex: 1; }
+  .slot-drill-name.empty { color: var(--text-dim); font-style: italic; font-weight: 400; }
+  .slot-notes { font-size: 11px; color: var(--text-dim); }
+  .slot-link a { font-size: 11px; color: var(--blue); text-decoration: none; }
+  .slot-link a:hover { text-decoration: underline; }
+  .slot-edit-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .slot-edit-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* Copy session bar */
+  .copy-session-bar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .copy-session-bar span { font-size: 13px; color: var(--text-dim); flex: 1; min-width: 120px; }
+  .copy-week-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .copy-week-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-week-btn:hover { border-color: var(--green); color: var(--green); background: rgba(46,204,113,0.08); }
+  .copy-week-btn.self { opacity: 0.3; pointer-events: none; }
+
+  /* ===== DRILL LIBRARY ===== */
+  .drill-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-btn {
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn.active, .filter-btn:hover { border-color: var(--orange); color: var(--orange); background: rgba(233,79,14,0.08); }
+
+  .drill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+
+  .drill-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .drill-card.rated-fire { border-color: rgba(233,79,14,0.5); }
+  .drill-card.rated-good { border-color: rgba(46,204,113,0.4); }
+  .drill-card.rated-meh  { border-color: rgba(241,196,15,0.3); }
+  .drill-card.rated-drop { border-color: rgba(231,76,60,0.3); }
+
+  .drill-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .drill-card-name { font-weight: 600; font-size: 14px; color: var(--chalk); flex: 1; }
+
+  /* RATING WIDGET */
+  .rating-widget { display: flex; gap: 3px; flex-shrink: 0; }
+  .rating-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 14px;
+    width: 30px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    opacity: 0.45;
+  }
+  .rating-btn:hover { opacity: 1; transform: scale(1.1); }
+  .rating-btn.active { opacity: 1; border-color: currentColor; background: rgba(255,255,255,0.06); }
+  .rating-btn[data-r="fire"].active  { border-color: var(--orange); }
+  .rating-btn[data-r="good"].active  { border-color: var(--green); }
+  .rating-btn[data-r="meh"].active   { border-color: var(--yellow); }
+  .rating-btn[data-r="drop"].active  { border-color: var(--red); }
+
+  .drill-card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 7px; }
+  .drill-tag {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .drill-tag-offense   { background: rgba(233,79,14,0.2);  color: var(--orange); }
+  .drill-tag-defense   { background: rgba(52,152,219,0.2); color: var(--blue); }
+  .drill-tag-warmup    { background: rgba(241,196,15,0.2); color: var(--yellow); }
+  .drill-tag-scrimmage { background: rgba(46,204,113,0.2); color: var(--green); }
+  .drill-tag-structure { background: rgba(155,89,182,0.2); color: var(--purple); }
+  .drill-tag-cooldown  { background: rgba(255,255,255,0.12); color: var(--chalk-dim); }
+
+  .drill-card-notes { font-size: 12px; color: var(--text-dim); margin-bottom: 7px; }
+  .drill-card-link a { font-size: 11px; color: var(--blue); text-decoration: none; word-break: break-all; }
+  .drill-card-link a:hover { text-decoration: underline; }
+  .drill-card-teams { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+  .drill-card-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+
+  /* ===== PLAYERS ===== */
+  .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .player-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .player-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--chalk);
+    margin-bottom: 2px;
+  }
+  .player-card-team { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .player-focus-list { list-style: none; }
+  .player-focus-list li {
+    font-size: 12px;
+    color: var(--chalk-dim);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .player-focus-list li:last-child { border-bottom: none; }
+  .player-focus-list li::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--orange);
+    flex-shrink: 0;
+  }
+  .player-card-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    display: none;
+  }
+  .modal-overlay.open { display: flex; }
+  @media(min-width:600px) {
+    .modal-overlay { align-items: center; padding: 20px; }
+    .modal { border-radius: 10px !important; max-height: 90vh; }
+  }
+  .modal {
+    background: var(--court-mid);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 32px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--chalk);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-close {
+    background: transparent; border: none;
+    color: var(--text-dim); font-size: 22px;
+    cursor: pointer; line-height: 1; padding: 4px;
+  }
+  .modal-close:hover { color: var(--chalk); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--green); color: white;
+    padding: 10px 22px; border-radius: 24px;
+    font-weight: 600; font-size: 13px;
+    z-index: 300; opacity: 0;
+    transition: all 0.25s; pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* EMPTY */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-dim);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+  .empty-state p { margin-bottom: 14px; }
+
+  /* STATS GRID */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  @media(max-width:500px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+  .stat-box { text-align:center; padding:12px 8px; background:var(--court); border-radius:6px; }
+  .stat-num { font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:900; line-height:1; }
+  .stat-lbl { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+
+  .session-structure-list { display:flex; flex-direction:column; gap:5px; }
+  .ss-row {
+    display:flex; align-items:center; gap:10px;
+    padding:7px 10px; border-radius:6px;
+  }
+  .ss-mins { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; width:32px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">🏀 <span>COACH</span>PLAN</div>
+  <div class="header-team-tabs">
+    <button class="team-tab active" onclick="setTeam('u12',this)">U12</button>
+    <button class="team-tab" onclick="setTeam('u14',this)">U14</button>
+    <button class="team-tab" onclick="setTeam('social',this)">Social</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="setPage('block',this)">Block Overview</button>
+  <button class="nav-btn" onclick="setPage('session',this)">Session Planner</button>
+  <button class="nav-btn" onclick="setPage('library',this)">Drill Library</button>
+  <button class="nav-btn" onclick="setPage('players',this)">Players</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ===== BLOCK OVERVIEW ===== -->
+  <div id="page-block" class="page active">
+    <div class="block-header">
+      <div>
+        <h2 id="block-display-title">4-Week Block</h2>
+        <p id="block-display-dates" style="color:var(--text-dim);font-size:13px;margin-top:2px;"></p>
+        <div class="focus-pills" id="focus-pills-display"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openBlockModal()">Edit Block</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Block Focuses <span class="tag tag-orange">4-Week Priorities</span></div>
+      <div id="focuses-display-row" style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="color:var(--text-dim);font-size:13px;">No focuses set yet — tap Edit Block to add them.</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Quick Stats</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-num" id="stat-drills" style="color:var(--orange)">0</div><div class="stat-lbl">Drills</div></div>
+          <div class="stat-box"><div class="stat-num" id="stat-sessions" style="color:var(--green)">0</div><div class="stat-lbl">Slots Filled</div></div>
+          <div class="stat-box"><div class="stat-num" id="stat-players" style="color:var(--blue)">0</div><div class="stat-lbl">Players</div></div>
+          <div class="stat-box"><div class="stat-num" style="color:var(--purple)">52</div><div class="stat-lbl">Mins/Session</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Session Structure</div>
+        <div class="session-structure-list">
+          <div class="ss-row" style="background:rgba(241,196,15,0.08);border-left:3px solid var(--yellow)"><span class="ss-mins" style="color:var(--yellow)">5m</span><span style="font-size:13px">Warm Up</span></div>
+          <div class="ss-row" style="background:rgba(233,79,14,0.08);border-left:3px solid var(--orange)"><span class="ss-mins" style="color:var(--orange)">7m</span><span style="font-size:13px">Skills — Offense</span></div>
+          <div class="ss-row" style="background:rgba(52,152,219,0.08);border-left:3px solid var(--blue)"><span class="ss-mins" style="color:var(--blue)">7m</span><span style="font-size:13px">Skills — Defense</span></div>
+          <div class="ss-row" style="background:rgba(155,89,182,0.08);border-left:3px solid var(--purple)"><span class="ss-mins" style="color:var(--purple)">7m</span><span style="font-size:13px">Structure / Sets</span></div>
+          <div class="ss-row" style="background:rgba(46,204,113,0.08);border-left:3px solid var(--green)"><span class="ss-mins" style="color:var(--green)">21m</span><span style="font-size:13px">Scrimmage × 3 slots</span></div>
+          <div class="ss-row" style="background:rgba(255,255,255,0.04);border-left:3px solid var(--text-dim)"><span class="ss-mins" style="color:var(--text-dim)">5m</span><span style="font-size:13px">Cool Down</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SESSION PLANNER ===== -->
+  <div id="page-session" class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div class="section-title" style="margin:0;">Session Planner <span class="tag tag-green" id="session-team-label">U12</span></div>
+      <div class="week-tabs" id="week-tabs">
+        <button class="week-tab active" onclick="setWeek(1,this)">Week 1</button>
+        <button class="week-tab" onclick="setWeek(2,this)">Week 2</button>
+        <button class="week-tab" onclick="setWeek(3,this)">Week 3</button>
+        <button class="week-tab" onclick="setWeek(4,this)">Week 4</button>
+      </div>
+    </div>
+
+    <!-- Copy session bar -->
+    <div class="copy-session-bar">
+      <span>📋 Copy this session to:</span>
+      <div class="copy-week-btns" id="copy-week-btns"></div>
+    </div>
+
+    <div id="session-timeline" class="session-timeline"></div>
+  </div>
+
+  <!-- ===== DRILL LIBRARY ===== -->
+  <div id="page-library" class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div class="section-title" style="margin:0;">Drill Library <span class="tag tag-blue" id="drill-count-tag">0 drills</span></div>
+      <button class="btn btn-primary btn-sm" onclick="openDrillModal(null)">+ Add Drill</button>
+    </div>
+    <div class="drill-filters">
+      <button class="filter-btn active" onclick="setDrillFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setDrillFilter('warmup',this)">Warm Up</button>
+      <button class="filter-btn" onclick="setDrillFilter('offense',this)">Offense</button>
+      <button class="filter-btn" onclick="setDrillFilter('defense',this)">Defense</button>
+      <button class="filter-btn" onclick="setDrillFilter('structure',this)">Structure</button>
+      <button class="filter-btn" onclick="setDrillFilter('scrimmage',this)">Scrimmage</button>
+      <button class="filter-btn" onclick="setDrillFilter('cooldown',this)">Cool Down</button>
+      <button class="filter-btn" onclick="setDrillFilter('fire',this)">🔥 Fire</button>
+    </div>
+    <div id="drill-grid" class="drill-grid"></div>
+  </div>
+
+  <!-- ===== PLAYERS ===== -->
+  <div id="page-players" class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div class="section-title" style="margin:0;">Players <span class="tag tag-purple" id="player-team-label">U12</span></div>
+      <button class="btn btn-primary btn-sm" onclick="openPlayerModal(null)">+ Add Player</button>
+    </div>
+    <div id="player-grid" class="player-grid"></div>
+  </div>
+
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- BLOCK MODAL -->
+<div class="modal-overlay" id="modal-block">
+  <div class="modal">
+    <div class="modal-title">Edit 4-Week Block <button class="modal-close" onclick="closeModal('modal-block')">×</button></div>
+    <div class="field"><label>Block Title</label><input type="text" id="block-title" placeholder="e.g. Block 1 — June/July 2025"></div>
+    <div class="grid-2">
+      <div class="field"><label>Start Date</label><input type="text" id="block-start" placeholder="e.g. 2 June"></div>
+      <div class="field"><label>End Date</label><input type="text" id="block-end" placeholder="e.g. 27 June"></div>
+    </div>
+    <hr class="divider">
+    <div class="card-title" style="margin-bottom:12px;">Key Focuses (2–3 for this block)</div>
+    <div class="field"><div class="focus-number">1</div><label>Focus One</label><input type="text" id="focus-1" placeholder="e.g. Ball pressure on defense"></div>
+    <div class="field"><div class="focus-number">2</div><label>Focus Two</label><input type="text" id="focus-2" placeholder="e.g. Drive & kick — reading the defense"></div>
+    <div class="field"><div class="focus-number">3</div><label>Focus Three (optional)</label><input type="text" id="focus-3" placeholder="e.g. Screening — on-ball & off-ball"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-block')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBlock()">Save Block</button>
+    </div>
+  </div>
+</div>
+
+<!-- SLOT MODAL -->
+<div class="modal-overlay" id="modal-slot">
+  <div class="modal">
+    <div class="modal-title" id="slot-modal-title">Edit Slot <button class="modal-close" onclick="closeModal('modal-slot')">×</button></div>
+    <div class="field"><label>Drill / Activity Name</label><input type="text" id="slot-drill" placeholder="e.g. 3-man weave, Shell drill..."></div>
+    <div class="field"><label>Notes / Coaching Points</label><textarea id="slot-notes" placeholder="Key cues, variations, what to look for..."></textarea></div>
+    <div class="field"><label>Link to Video or Image (optional)</label><input type="url" id="slot-link" placeholder="https://..."></div>
+    <div class="field"><label>Link Label</label><input type="text" id="slot-link-label" placeholder="e.g. Instagram reel, YouTube clip..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-slot')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSlot()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRILL MODAL -->
+<div class="modal-overlay" id="modal-drill">
+  <div class="modal">
+    <div class="modal-title" id="drill-modal-title">Add Drill <button class="modal-close" onclick="closeModal('modal-drill')">×</button></div>
+    <div class="field"><label>Name</label><input type="text" id="drill-name" placeholder="e.g. Shell Drill, Pick & Roll Read..."></div>
+    <div class="field"><label>Category</label>
+      <select id="drill-category">
+        <option value="warmup">Warm Up</option>
+        <option value="offense">Offense Skills</option>
+        <option value="defense">Defense Skills</option>
+        <option value="structure">Structure / Sets</option>
+        <option value="scrimmage">Scrimmage Rule</option>
+        <option value="cooldown">Cool Down</option>
+      </select>
+    </div>
+    <div class="field"><label>Teams</label>
+      <div style="display:flex;gap:16px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-u12"> U12</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-u14"> U14</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-social"> Social</label>
+      </div>
+    </div>
+    <div class="field"><label>Notes / Coaching Points</label><textarea id="drill-notes" placeholder="How it works, key cues, setup..."></textarea></div>
+    <div class="field"><label>Link (video, image, post)</label><input type="url" id="drill-link" placeholder="https://..."></div>
+    <div class="field"><label>Link Label</label><input type="text" id="drill-link-label" placeholder="e.g. Instagram — @hoopscience"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-drill')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDrill()">Save Drill</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER MODAL -->
+<div class="modal-overlay" id="modal-player">
+  <div class="modal">
+    <div class="modal-title" id="player-modal-title">Add Player <button class="modal-close" onclick="closeModal('modal-player')">×</button></div>
+    <div class="grid-2">
+      <div class="field"><label>Name</label><input type="text" id="player-name" placeholder="Player name"></div>
+      <div class="field"><label>Team</label>
+        <select id="player-team">
+          <option value="u12">U12</option>
+          <option value="u14">U14</option>
+          <option value="social">Social Men's</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Individual Focus Areas (one per line)</label><textarea id="player-focuses" placeholder="e.g. Left hand finishing&#10;Defensive footwork&#10;Reading pick & roll"></textarea></div>
+    <div class="field"><label>Notes</label><textarea id="player-notes" placeholder="Any other notes..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-player')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePlayer()">Save Player</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== STATE =====================
+const STORAGE_KEY = 'coachplan_v2';
+let state = {
+  currentTeam: 'u12',
+  currentPage: 'block',
+  currentWeek: 1,
+  blocks: { u12: {}, u14: {}, social: {} },
+  sessions: {},
+  drills: [],
+  players: []
+};
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) { try { const saved = JSON.parse(raw); state = Object.assign({}, state, saved); } catch(e){} }
+}
+
+// ===================== SESSION STRUCTURE =====================
+const SESSION_SLOTS = [
+  { key: 'warmup',     label: 'Warm Up',   mins: 5,  type: 'slot-warmup',    ph: 'Fun warm up activity...' },
+  { key: 'offense1',   label: 'Offense',   mins: 7,  type: 'slot-offense',   ph: 'Offense skill drill...' },
+  { key: 'defense1',   label: 'Defense',   mins: 7,  type: 'slot-defense',   ph: 'Defense skill drill...' },
+  { key: 'structure1', label: 'Structure', mins: 7,  type: 'slot-structure', ph: 'Set play / principle...' },
+  { key: 'scrim1',     label: 'Scrimmage', mins: 7,  type: 'slot-scrimmage', ph: 'Scrimmage — free or add a rule...' },
+  { key: 'scrim2',     label: 'Scrimmage', mins: 7,  type: 'slot-scrimmage', ph: 'Scrimmage — free or add a rule...' },
+  { key: 'scrim3',     label: 'Scrimmage', mins: 7,  type: 'slot-scrimmage', ph: 'Scrimmage — free or add a rule...' },
+  { key: 'cooldown',   label: 'Cool Down', mins: 5,  type: 'slot-cooldown',  ph: 'Cool down / finishing activity...' },
+];
+
+function slotKey(team, week, key) { return `${team}_w${week}_${key}`; }
+
+// ===================== NAV =====================
+function setTeam(team, btn) {
+  state.currentTeam = team;
+  document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll(); save();
+}
+
+function setPage(page, btn) {
+  state.currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function setWeek(w, btn) {
+  state.currentWeek = w;
+  document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderSession();
+}
+
+// ===================== RENDER ALL =====================
+function renderAll() {
+  renderBlock(); renderSession(); renderDrills(); renderPlayers(); updateStats();
+}
+
+// ===================== BLOCK =====================
+function renderBlock() {
+  const b = state.blocks[state.currentTeam] || {};
+  document.getElementById('block-display-title').textContent = b.title || '4-Week Block';
+  document.getElementById('block-display-dates').textContent = (b.start && b.end) ? b.start + ' — ' + b.end : '';
+  const pills = document.getElementById('focus-pills-display');
+  pills.innerHTML = '';
+  [b.focus1, b.focus2, b.focus3].filter(Boolean).forEach(f => {
+    const el = document.createElement('div'); el.className = 'focus-pill'; el.textContent = f; pills.appendChild(el);
+  });
+  const row = document.getElementById('focuses-display-row');
+  row.innerHTML = '';
+  const fs = [b.focus1, b.focus2, b.focus3];
+  if (!fs.filter(Boolean).length) {
+    row.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">No focuses set yet — tap Edit Block to add them.</div>'; return;
+  }
+  fs.forEach((f, i) => {
+    if (!f) return;
+    const d = document.createElement('div');
+    d.style.cssText = 'flex:1;min-width:140px;background:var(--court);border-radius:8px;padding:14px;border-left:3px solid var(--orange);';
+    d.innerHTML = `<div class="focus-number">${i+1}</div><div style="font-size:13px;color:var(--chalk);font-weight:600;">${f}</div>`;
+    row.appendChild(d);
+  });
+}
+
+function openBlockModal() {
+  const b = state.blocks[state.currentTeam] || {};
+  document.getElementById('block-title').value = b.title || '';
+  document.getElementById('block-start').value = b.start || '';
+  document.getElementById('block-end').value = b.end || '';
+  document.getElementById('focus-1').value = b.focus1 || '';
+  document.getElementById('focus-2').value = b.focus2 || '';
+  document.getElementById('focus-3').value = b.focus3 || '';
+  openModal('modal-block');
+}
+
+function saveBlock() {
+  state.blocks[state.currentTeam] = {
+    title: document.getElementById('block-title').value,
+    start: document.getElementById('block-start').value,
+    end: document.getElementById('block-end').value,
+    focus1: document.getElementById('focus-1').value,
+    focus2: document.getElementById('focus-2').value,
+    focus3: document.getElementById('focus-3').value,
+  };
+  closeModal('modal-block'); renderBlock(); updateStats(); save(); showToast('Block saved');
+}
+
+// ===================== SESSION =====================
+function renderSession() {
+  const teamLabel = state.currentTeam === 'u12' ? 'U12' : state.currentTeam === 'u14' ? 'U14' : "Social Men's";
+  document.getElementById('session-team-label').textContent = teamLabel;
+
+  // Copy buttons
+  const copyBtns = document.getElementById('copy-week-btns');
+  copyBtns.innerHTML = '';
+  [1,2,3,4].forEach(w => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-week-btn' + (w === state.currentWeek ? ' self' : '');
+    btn.textContent = 'Week ' + w;
+    if (w !== state.currentWeek) btn.onclick = () => copySessionToWeek(w);
+    copyBtns.appendChild(btn);
+  });
+
+  const container = document.getElementById('session-timeline');
+  container.innerHTML = '';
+  SESSION_SLOTS.forEach(slot => {
+    const key = slotKey(state.currentTeam, state.currentWeek, slot.key);
+    const data = state.sessions[key] || {};
+    const el = document.createElement('div');
+    el.className = `session-slot ${slot.type}`;
+    el.innerHTML = `
+      <div class="slot-time">
+        <div class="mins">${slot.mins}</div>
+        <div class="mins-label">min</div>
+        <div class="slot-label">${slot.label}</div>
+      </div>
+      <div class="slot-content">
+        <div class="slot-content-top">
+          <div class="slot-drill-name ${data.drill ? '' : 'empty'}">${data.drill || slot.ph}</div>
+          <button class="slot-edit-btn" onclick="openSlotModal('${key}','${slot.label} — ${slot.mins} min')">Edit</button>
+        </div>
+        ${data.notes ? `<div class="slot-notes">${data.notes}</div>` : ''}
+        ${data.link ? `<div class="slot-link"><a href="${data.link}" target="_blank">🔗 ${data.linkLabel || 'View link'}</a></div>` : ''}
+      </div>`;
+    container.appendChild(el);
+  });
+  updateStats();
+}
+
+function copySessionToWeek(targetWeek) {
+  const team = state.currentTeam;
+  const fromWeek = state.currentWeek;
+  SESSION_SLOTS.forEach(slot => {
+    const fromKey = slotKey(team, fromWeek, slot.key);
+    const toKey   = slotKey(team, targetWeek, slot.key);
+    if (state.sessions[fromKey]) {
+      state.sessions[toKey] = Object.assign({}, state.sessions[fromKey]);
+    }
+  });
+  save(); showToast(`Session copied to Week ${targetWeek}`);
+}
+
+let currentSlotKey = null;
+function openSlotModal(key, label) {
+  currentSlotKey = key;
+  document.getElementById('slot-modal-title').innerHTML = `${label} <button class="modal-close" onclick="closeModal('modal-slot')">×</button>`;
+  const data = state.sessions[key] || {};
+  document.getElementById('slot-drill').value = data.drill || '';
+  document.getElementById('slot-notes').value = data.notes || '';
+  document.getElementById('slot-link').value = data.link || '';
+  document.getElementById('slot-link-label').value = data.linkLabel || '';
+  openModal('modal-slot');
+}
+
+function saveSlot() {
+  state.sessions[currentSlotKey] = {
+    drill: document.getElementById('slot-drill').value,
+    notes: document.getElementById('slot-notes').value,
+    link: document.getElementById('slot-link').value,
+    linkLabel: document.getElementById('slot-link-label').value,
+  };
+  closeModal('modal-slot'); renderSession(); save(); showToast('Slot saved');
+}
+
+// ===================== DRILLS =====================
+let currentDrillId = null;
+let currentDrillFilter = 'all';
+
+function setDrillFilter(filter, btn) {
+  currentDrillFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDrills();
+}
+
+const RATING_META = {
+  fire: { emoji: '🔥', label: 'Fire' },
+  good: { emoji: '👍', label: 'Good' },
+  meh:  { emoji: '😐', label: 'Meh' },
+  drop: { emoji: '👎', label: 'Drop' },
+};
+
+function toggleRating(drillId, rating) {
+  const drill = state.drills.find(d => d.id === drillId);
+  if (!drill) return;
+  drill.rating = drill.rating === rating ? null : rating;
+  save(); renderDrills();
+}
+
+function renderDrills() {
+  const grid = document.getElementById('drill-grid');
+  let drills = state.drills.filter(d => {
+    if (currentDrillFilter === 'all') return true;
+    if (currentDrillFilter === 'fire') return d.rating === 'fire';
+    return d.category === currentDrillFilter;
+  });
+
+  document.getElementById('drill-count-tag').textContent = `${state.drills.length} drill${state.drills.length !== 1 ? 's' : ''}`;
+
+  if (!drills.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="icon">📋</div>
+      <p>${currentDrillFilter === 'fire' ? 'No 🔥 drills yet — rate your best ones!' : 'No drills yet' + (currentDrillFilter !== 'all' ? ' in this category' : '') + '.'}</p>
+      ${currentDrillFilter === 'all' ? '<button class="btn btn-primary" onclick="openDrillModal(null)">Add your first drill</button>' : ''}
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  drills.forEach(drill => {
+    const ratingClass = drill.rating ? `rated-${drill.rating}` : '';
+    const teams = (drill.teams || []).map(t => t === 'u12' ? 'U12' : t === 'u14' ? 'U14' : 'Social').join(', ') || '—';
+    const card = document.createElement('div');
+    card.className = `drill-card ${ratingClass}`;
+
+    const ratingBtns = Object.entries(RATING_META).map(([r, m]) =>
+      `<button class="rating-btn ${drill.rating === r ? 'active' : ''}" data-r="${r}" title="${m.label}" onclick="toggleRating('${drill.id}','${r}')">${m.emoji}</button>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="drill-card-header">
+        <div class="drill-card-name">${drill.name}</div>
+        <div class="rating-widget">${ratingBtns}</div>
+      </div>
+      <div class="drill-card-tags">
+        <span class="drill-tag drill-tag-${drill.category}">${drill.category}</span>
+        ${drill.rating ? `<span style="font-size:12px;">${RATING_META[drill.rating].emoji}</span>` : ''}
+      </div>
+      ${drill.notes ? `<div class="drill-card-notes">${drill.notes}</div>` : ''}
+      ${drill.link ? `<div class="drill-card-link"><a href="${drill.link}" target="_blank">🔗 ${drill.linkLabel || 'View link'}</a></div>` : ''}
+      <div class="drill-card-teams">Teams: ${teams}</div>
+      <div class="drill-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="openDrillModal('${drill.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDrill('${drill.id}')">Delete</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function openDrillModal(id) {
+  currentDrillId = id;
+  const drill = id ? state.drills.find(d => d.id === id) : null;
+  document.getElementById('drill-modal-title').innerHTML = (drill ? 'Edit Drill' : 'Add Drill / Play') + ` <button class="modal-close" onclick="closeModal('modal-drill')">×</button>`;
+  document.getElementById('drill-name').value = drill?.name || '';
+  document.getElementById('drill-category').value = drill?.category || 'offense';
+  document.getElementById('dt-u12').checked   = !!(drill?.teams||[]).includes('u12');
+  document.getElementById('dt-u14').checked   = !!(drill?.teams||[]).includes('u14');
+  document.getElementById('dt-social').checked = !!(drill?.teams||[]).includes('social');
+  document.getElementById('drill-notes').value = drill?.notes || '';
+  document.getElementById('drill-link').value  = drill?.link || '';
+  document.getElementById('drill-link-label').value = drill?.linkLabel || '';
+  openModal('modal-drill');
+}
+
+function saveDrill() {
+  const teams = [];
+  if (document.getElementById('dt-u12').checked)    teams.push('u12');
+  if (document.getElementById('dt-u14').checked)    teams.push('u14');
+  if (document.getElementById('dt-social').checked) teams.push('social');
+  const name = document.getElementById('drill-name').value.trim();
+  if (!name) { alert('Please enter a drill name.'); return; }
+  const existing = currentDrillId ? state.drills.find(d => d.id === currentDrillId) : null;
+  const drill = {
+    id: currentDrillId || Date.now().toString(),
+    name,
+    category: document.getElementById('drill-category').value,
+    teams,
+    notes: document.getElementById('drill-notes').value,
+    link: document.getElementById('drill-link').value,
+    linkLabel: document.getElementById('drill-link-label').value,
+    rating: existing?.rating || null,
+  };
+  if (currentDrillId) {
+    const idx = state.drills.findIndex(d => d.id === currentDrillId);
+    if (idx > -1) state.drills[idx] = drill;
+  } else {
+    state.drills.push(drill);
+  }
+  closeModal('modal-drill'); renderDrills(); updateStats(); save();
+  showToast(currentDrillId ? 'Drill updated' : 'Drill added');
+}
+
+function deleteDrill(id) {
+  if (!confirm('Delete this drill?')) return;
+  state.drills = state.drills.filter(d => d.id !== id);
+  renderDrills(); updateStats(); save(); showToast('Drill deleted');
+}
+
+// ===================== PLAYERS =====================
+let currentPlayerId = null;
+
+function renderPlayers() {
+  const teamLabel = state.currentTeam === 'u12' ? 'U12' : state.currentTeam === 'u14' ? 'U14' : "Social Men's";
+  document.getElementById('player-team-label').textContent = teamLabel;
+  const grid = document.getElementById('player-grid');
+  const players = state.players.filter(p => p.team === state.currentTeam);
+  if (!players.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="icon">👤</div><p>No players added for this team yet.</p>
+      <button class="btn btn-primary" onclick="openPlayerModal(null)">Add player</button>
+    </div>`; return;
+  }
+  grid.innerHTML = '';
+  players.forEach(p => {
+    const focuses = (p.focuses || '').split('\n').filter(Boolean);
+    const card = document.createElement('div');
+    card.className = 'player-card';
+    card.innerHTML = `
+      <div class="player-card-name">${p.name}</div>
+      <div class="player-card-team">${teamLabel}</div>
+      ${focuses.length ? `<ul class="player-focus-list">${focuses.map(f=>`<li>${f}</li>`).join('')}</ul>` : '<div style="font-size:12px;color:var(--text-dim)">No focuses set.</div>'}
+      ${p.notes ? `<div style="font-size:12px;color:var(--text-dim);margin-top:8px">${p.notes}</div>` : ''}
+      <div class="player-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="openPlayerModal('${p.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">Remove</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function openPlayerModal(id) {
+  currentPlayerId = id;
+  const p = id ? state.players.find(p => p.id === id) : null;
+  document.getElementById('player-modal-title').innerHTML = (p ? 'Edit Player' : 'Add Player') + ` <button class="modal-close" onclick="closeModal('modal-player')">×</button>`;
+  document.getElementById('player-name').value   = p?.name || '';
+  document.getElementById('player-team').value   = p?.team || state.currentTeam;
+  document.getElementById('player-focuses').value = p?.focuses || '';
+  document.getElementById('player-notes').value  = p?.notes || '';
+  openModal('modal-player');
+}
+
+function savePlayer() {
+  const name = document.getElementById('player-name').value.trim();
+  if (!name) { alert('Please enter a player name.'); return; }
+  const player = {
+    id: currentPlayerId || Date.now().toString(),
+    name,
+    team: document.getElementById('player-team').value,
+    focuses: document.getElementById('player-focuses').value,
+    notes: document.getElementById('player-notes').value,
+  };
+  if (currentPlayerId) {
+    const idx = state.players.findIndex(p => p.id === currentPlayerId);
+    if (idx > -1) state.players[idx] = player;
+  } else { state.players.push(player); }
+  closeModal('modal-player'); renderPlayers(); updateStats(); save();
+  showToast(currentPlayerId ? 'Player updated' : 'Player added');
+}
+
+function deletePlayer(id) {
+  if (!confirm('Remove this player?')) return;
+  state.players = state.players.filter(p => p.id !== id);
+  renderPlayers(); updateStats(); save();
+}
+
+// ===================== STATS =====================
+function updateStats() {
+  document.getElementById('stat-drills').textContent = state.drills.length;
+  const sessionCount = Object.values(state.sessions).filter(s => s.drill).length;
+  document.getElementById('stat-sessions').textContent = sessionCount;
+  document.getElementById('stat-players').textContent = state.players.filter(p => p.team === state.currentTeam).length;
+}
+
+// ===================== MODALS =====================
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg + ' ✓';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===================== INIT =====================
+load(); renderAll();
+</script>
+</body>
+</html>
