@@ -334,6 +334,49 @@
   }
   .slot-edit-btn:hover { border-color: var(--orange); color: var(--orange); }
 
+  /* Drag handle */
+  .drag-handle {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 6px;
+    cursor: grab;
+    flex-shrink: 0;
+    opacity: 0.35;
+    touch-action: none;
+    align-self: stretch;
+    justify-content: center;
+  }
+  .drag-handle:hover { opacity: 0.8; }
+  .drag-handle span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    background: var(--chalk);
+    border-radius: 2px;
+  }
+  .session-slot.dragging {
+    opacity: 0.4;
+    border: 2px dashed var(--orange);
+  }
+  .session-slot.drag-over {
+    border-color: var(--orange);
+    background: rgba(233,79,14,0.06);
+  }
+  .drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 500;
+    opacity: 0.92;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    transform: scale(1.02);
+    transition: transform 0.1s;
+    background: var(--card);
+    border: 2px solid var(--orange);
+    overflow: hidden;
+  }
+
   /* Copy session bar */
   .copy-session-bar {
     background: var(--card);
@@ -943,6 +986,20 @@ function saveBlock() {
 }
 
 // ===================== SESSION =====================
+// Get slot order for current team+week (falls back to default)
+function getSlotOrder() {
+  const key = `order_${state.currentTeam}_w${state.currentWeek}`;
+  if (state.slotOrders && state.slotOrders[key]) return state.slotOrders[key];
+  return SESSION_SLOTS.map(s => s.key);
+}
+
+function saveSlotOrder(order) {
+  if (!state.slotOrders) state.slotOrders = {};
+  const key = `order_${state.currentTeam}_w${state.currentWeek}`;
+  state.slotOrders[key] = order;
+  save();
+}
+
 function renderSession() {
   document.getElementById('session-team-label').textContent = teamName(state.currentTeam);
 
@@ -959,12 +1016,18 @@ function renderSession() {
 
   const container = document.getElementById('session-timeline');
   container.innerHTML = '';
-  SESSION_SLOTS.forEach(slot => {
+
+  const order = getSlotOrder();
+  const orderedSlots = order.map(k => SESSION_SLOTS.find(s => s.key === k)).filter(Boolean);
+
+  orderedSlots.forEach((slot, idx) => {
     const key = slotKey(state.currentTeam, state.currentWeek, slot.key);
     const data = state.sessions[key] || {};
     const el = document.createElement('div');
     el.className = `session-slot ${slot.type}`;
+    el.dataset.slotKey = slot.key;
     el.innerHTML = `
+      <div class="drag-handle" title="Hold to drag"><span></span><span></span><span></span></div>
       <div class="slot-time">
         <div class="mins">${slot.mins}</div>
         <div class="mins-label">min</div>
@@ -980,7 +1043,105 @@ function renderSession() {
       </div>`;
     container.appendChild(el);
   });
+
+  initDrag(container);
   updateStats();
+}
+
+// ===================== DRAG & DROP (touch + mouse) =====================
+function initDrag(container) {
+  let dragEl = null, ghost = null, dragKey = null;
+  let startY = 0, offsetY = 0;
+  let placeholder = null;
+
+  function getSlotEls() { return Array.from(container.querySelectorAll('.session-slot')); }
+
+  function createGhost(el) {
+    const rect = el.getBoundingClientRect();
+    const g = el.cloneNode(true);
+    g.className = 'drag-ghost';
+    g.style.width = rect.width + 'px';
+    g.style.height = rect.height + 'px';
+    g.style.left = rect.left + 'px';
+    g.style.top = rect.top + 'px';
+    document.body.appendChild(g);
+    return g;
+  }
+
+  function createPlaceholder(height) {
+    const p = document.createElement('div');
+    p.style.cssText = `height:${height}px;border:2px dashed var(--orange);border-radius:var(--radius);background:rgba(233,79,14,0.05);margin:0;transition:height 0.15s;`;
+    return p;
+  }
+
+  function onDragStart(e, el) {
+    dragEl = el;
+    dragKey = el.dataset.slotKey;
+    const rect = el.getBoundingClientRect();
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    offsetY = clientY - rect.top;
+    startY = clientY;
+
+    ghost = createGhost(el);
+    placeholder = createPlaceholder(rect.height);
+
+    setTimeout(() => {
+      el.classList.add('dragging');
+      el.parentNode.insertBefore(placeholder, el);
+      el.style.display = 'none';
+    }, 0);
+
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+  }
+
+  function onMove(e) {
+    if (!dragEl) return;
+    e.preventDefault();
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    ghost.style.top = (clientY - offsetY) + 'px';
+
+    // Find insertion point
+    const slots = getSlotEls().filter(s => s !== dragEl);
+    let insertBefore = null;
+    for (const s of slots) {
+      const r = s.getBoundingClientRect();
+      if (clientY < r.top + r.height / 2) { insertBefore = s; break; }
+    }
+    if (insertBefore) container.insertBefore(placeholder, insertBefore);
+    else container.appendChild(placeholder);
+  }
+
+  function onEnd(e) {
+    if (!dragEl) return;
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+
+    // Insert dragEl where placeholder is
+    container.insertBefore(dragEl, placeholder);
+    placeholder.remove();
+    ghost.remove();
+    dragEl.style.display = '';
+    dragEl.classList.remove('dragging');
+
+    // Save new order
+    const newOrder = getSlotEls().map(s => s.dataset.slotKey);
+    saveSlotOrder(newOrder);
+
+    dragEl = null; ghost = null; placeholder = null;
+    showToast('Order saved');
+  }
+
+  // Attach listeners to drag handles
+  container.querySelectorAll('.drag-handle').forEach(handle => {
+    const el = handle.closest('.session-slot');
+    handle.addEventListener('touchstart', e => { e.preventDefault(); onDragStart(e, el); }, { passive: false });
+    handle.addEventListener('mousedown', e => onDragStart(e, el));
+  });
 }
 
 function copySessionToWeek(targetWeek) {
@@ -993,6 +1154,13 @@ function copySessionToWeek(targetWeek) {
       state.sessions[toKey] = Object.assign({}, state.sessions[fromKey]);
     }
   });
+  // Copy slot order too
+  if (!state.slotOrders) state.slotOrders = {};
+  const fromOrderKey = `order_${team}_w${fromWeek}`;
+  const toOrderKey   = `order_${team}_w${targetWeek}`;
+  if (state.slotOrders[fromOrderKey]) {
+    state.slotOrders[toOrderKey] = [...state.slotOrders[fromOrderKey]];
+  }
   save(); showToast(`Session copied to Week ${targetWeek}`);
 }
 
