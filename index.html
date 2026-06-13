@@ -391,6 +391,7 @@
   .drill-card.rated-good { border-color: rgba(46,204,113,0.4); }
   .drill-card.rated-meh  { border-color: rgba(241,196,15,0.3); }
   .drill-card.rated-drop { border-color: rgba(231,76,60,0.3); }
+  .drill-card.selected   { border-color: var(--orange); background: rgba(233,79,14,0.08); }
 
   .drill-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
   .drill-card-name { font-weight: 600; font-size: 14px; color: var(--chalk); flex: 1; }
@@ -427,12 +428,16 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
-  .drill-tag-offense   { background: rgba(233,79,14,0.2);  color: var(--orange); }
-  .drill-tag-defense   { background: rgba(52,152,219,0.2); color: var(--blue); }
-  .drill-tag-warmup    { background: rgba(241,196,15,0.2); color: var(--yellow); }
-  .drill-tag-scrimmage { background: rgba(46,204,113,0.2); color: var(--green); }
-  .drill-tag-structure { background: rgba(155,89,182,0.2); color: var(--purple); }
-  .drill-tag-cooldown  { background: rgba(255,255,255,0.12); color: var(--chalk-dim); }
+  .drill-tag-offense      { background: rgba(233,79,14,0.2);   color: var(--orange); }
+  .drill-tag-defense      { background: rgba(52,152,219,0.2);  color: var(--blue); }
+  .drill-tag-warmup       { background: rgba(241,196,15,0.2);  color: var(--yellow); }
+  .drill-tag-scrimmage    { background: rgba(46,204,113,0.2);  color: var(--green); }
+  .drill-tag-structure    { background: rgba(155,89,182,0.2);  color: var(--purple); }
+  .drill-tag-cooldown     { background: rgba(255,255,255,0.12); color: var(--chalk-dim); }
+  .drill-tag-offsets      { background: rgba(233,79,14,0.15);  color: #ff8c42; }
+  .drill-tag-endline      { background: rgba(26,188,156,0.2);  color: #1abc9c; }
+  .drill-tag-sideline     { background: rgba(52,219,180,0.15); color: #36d9b8; }
+  .drill-tag-defsets      { background: rgba(52,100,219,0.2);  color: #6c8edb; }
 
   .drill-card-notes { font-size: 12px; color: var(--text-dim); margin-bottom: 7px; }
   .drill-card-link a { font-size: 11px; color: var(--blue); text-decoration: none; word-break: break-all; }
@@ -559,10 +564,9 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-title">🏀 <span>COACH</span>PLAN</div>
-  <div class="header-team-tabs">
-    <button class="team-tab active" onclick="setTeam('u12',this)">U12</button>
-    <button class="team-tab" onclick="setTeam('u14',this)">U14</button>
-    <button class="team-tab" onclick="setTeam('social',this)">Social</button>
+  <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+    <div class="header-team-tabs" id="team-tabs-container"></div>
+    <button onclick="openTeamsModal()" title="Manage Teams" style="background:transparent;border:1px dashed var(--border);color:var(--text-dim);border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;">⚙ Teams</button>
   </div>
 </div>
 
@@ -644,7 +648,20 @@
   <div id="page-library" class="page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <div class="section-title" style="margin:0;">Drill Library <span class="tag tag-blue" id="drill-count-tag">0 drills</span></div>
-      <button class="btn btn-primary btn-sm" onclick="openDrillModal(null)">+ Add Drill</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" id="select-mode-btn" onclick="toggleSelectMode()">Select to Share</button>
+        <button class="btn btn-ghost btn-sm" id="share-all-btn" onclick="shareAllDrills()">Share All</button>
+        <button class="btn btn-primary btn-sm" onclick="openDrillModal(null)">+ Add Drill</button>
+      </div>
+    </div>
+    <!-- Share selection bar (hidden until select mode) -->
+    <div id="share-bar" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <span id="share-bar-count" style="font-size:13px;color:var(--text-dim);">0 selected</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="selectAllVisible()">Select All</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Clear</button>
+        <button class="btn btn-primary btn-sm" onclick="shareSelected()">Share Selected</button>
+      </div>
     </div>
     <div class="drill-filters">
       <button class="filter-btn active" onclick="setDrillFilter('all',this)">All</button>
@@ -652,6 +669,10 @@
       <button class="filter-btn" onclick="setDrillFilter('offense',this)">Offense</button>
       <button class="filter-btn" onclick="setDrillFilter('defense',this)">Defense</button>
       <button class="filter-btn" onclick="setDrillFilter('structure',this)">Structure</button>
+      <button class="filter-btn" onclick="setDrillFilter('offsets',this)">Offensive Sets</button>
+      <button class="filter-btn" onclick="setDrillFilter('defsets',this)">Defensive Sets</button>
+      <button class="filter-btn" onclick="setDrillFilter('endline',this)">End-Line</button>
+      <button class="filter-btn" onclick="setDrillFilter('sideline',this)">Side-Line</button>
       <button class="filter-btn" onclick="setDrillFilter('scrimmage',this)">Scrimmage</button>
       <button class="filter-btn" onclick="setDrillFilter('cooldown',this)">Cool Down</button>
       <button class="filter-btn" onclick="setDrillFilter('fire',this)">🔥 Fire</button>
@@ -719,16 +740,16 @@
         <option value="offense">Offense Skills</option>
         <option value="defense">Defense Skills</option>
         <option value="structure">Structure / Sets</option>
+        <option value="offsets">Offensive Sets</option>
+        <option value="defsets">Defensive Sets</option>
+        <option value="endline">End-Line Plays</option>
+        <option value="sideline">Side-Line Plays</option>
         <option value="scrimmage">Scrimmage Rule</option>
         <option value="cooldown">Cool Down</option>
       </select>
     </div>
     <div class="field"><label>Teams</label>
-      <div style="display:flex;gap:16px;margin-top:4px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-u12"> U12</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-u14"> U14</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;"><input type="checkbox" id="dt-social"> Social</label>
-      </div>
+      <div id="drill-team-checks" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;"></div>
     </div>
     <div class="field"><label>Notes / Coaching Points</label><textarea id="drill-notes" placeholder="How it works, key cues, setup..."></textarea></div>
     <div class="field"><label>Link (video, image, post)</label><input type="url" id="drill-link" placeholder="https://..."></div>
@@ -763,16 +784,39 @@
   </div>
 </div>
 
+<!-- TEAMS MODAL -->
+<div class="modal-overlay" id="modal-teams">
+  <div class="modal">
+    <div class="modal-title">Manage Teams <button class="modal-close" onclick="closeModal('modal-teams')">×</button></div>
+    <div id="teams-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <hr class="divider">
+    <div style="font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Add New Team</div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="new-team-name" placeholder="e.g. U10, Senior Women's..." style="flex:1;">
+      <button class="btn btn-primary" onclick="addTeam()">Add</button>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:8px;">Note: removing a team deletes its session plans and players.</div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-teams')">Done</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ===================== STATE =====================
-const STORAGE_KEY = 'coachplan_v2';
+const STORAGE_KEY = 'coachplan_v3';
 let state = {
-  currentTeam: 'u12',
+  currentTeam: null,
   currentPage: 'block',
   currentWeek: 1,
+  teams: [
+    { id: 'u12',    name: 'U12' },
+    { id: 'u14',    name: 'U14' },
+    { id: 'social', name: "Social Men's" },
+  ],
   blocks: { u12: {}, u14: {}, social: {} },
   sessions: {},
   drills: [],
@@ -783,6 +827,13 @@ function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function load() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) { try { const saved = JSON.parse(raw); state = Object.assign({}, state, saved); } catch(e){} }
+  // Migrate old v2 data if no teams array
+  if (!state.teams || !state.teams.length) {
+    state.teams = [{ id:'u12', name:'U12' }, { id:'u14', name:'U14' }, { id:'social', name:"Social Men's" }];
+  }
+  if (!state.currentTeam || !state.teams.find(t => t.id === state.currentTeam)) {
+    state.currentTeam = state.teams[0].id;
+  }
 }
 
 // ===================== SESSION STRUCTURE =====================
@@ -800,11 +851,21 @@ const SESSION_SLOTS = [
 function slotKey(team, week, key) { return `${team}_w${week}_${key}`; }
 
 // ===================== NAV =====================
-function setTeam(team, btn) {
-  state.currentTeam = team;
-  document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderAll(); save();
+function renderTeamTabs() {
+  const container = document.getElementById('team-tabs-container');
+  container.innerHTML = '';
+  state.teams.forEach(team => {
+    const btn = document.createElement('button');
+    btn.className = 'team-tab' + (team.id === state.currentTeam ? ' active' : '');
+    btn.textContent = team.name;
+    btn.onclick = () => {
+      state.currentTeam = team.id;
+      renderTeamTabs();
+      renderAll();
+      save();
+    };
+    container.appendChild(btn);
+  });
 }
 
 function setPage(page, btn) {
@@ -823,9 +884,14 @@ function setWeek(w, btn) {
   renderSession();
 }
 
+function teamName(id) {
+  const t = state.teams.find(t => t.id === id);
+  return t ? t.name : id;
+}
+
 // ===================== RENDER ALL =====================
 function renderAll() {
-  renderBlock(); renderSession(); renderDrills(); renderPlayers(); updateStats();
+  renderTeamTabs(); renderBlock(); renderSession(); renderDrills(); renderPlayers(); updateStats();
 }
 
 // ===================== BLOCK =====================
@@ -878,8 +944,7 @@ function saveBlock() {
 
 // ===================== SESSION =====================
 function renderSession() {
-  const teamLabel = state.currentTeam === 'u12' ? 'U12' : state.currentTeam === 'u14' ? 'U14' : "Social Men's";
-  document.getElementById('session-team-label').textContent = teamLabel;
+  document.getElementById('session-team-label').textContent = teamName(state.currentTeam);
 
   // Copy buttons
   const copyBtns = document.getElementById('copy-week-btns');
@@ -956,12 +1021,122 @@ function saveSlot() {
 // ===================== DRILLS =====================
 let currentDrillId = null;
 let currentDrillFilter = 'all';
+let selectMode = false;
+let selectedDrills = new Set();
+
+const CATEGORY_LABELS = {
+  warmup:    'Warm Up',
+  offense:   'Offense Skills',
+  defense:   'Defense Skills',
+  structure: 'Structure / Sets',
+  offsets:   'Offensive Sets',
+  defsets:   'Defensive Sets',
+  endline:   'End-Line Plays',
+  sideline:  'Side-Line Plays',
+  scrimmage: 'Scrimmage Rule',
+  cooldown:  'Cool Down',
+};
 
 function setDrillFilter(filter, btn) {
   currentDrillFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderDrills();
+}
+
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedDrills.clear();
+  const btn = document.getElementById('select-mode-btn');
+  const bar = document.getElementById('share-bar');
+  btn.textContent = selectMode ? 'Cancel' : 'Select to Share';
+  btn.className = selectMode ? 'btn btn-danger btn-sm' : 'btn btn-ghost btn-sm';
+  bar.style.display = selectMode ? 'flex' : 'none';
+  renderDrills();
+}
+
+function toggleDrillSelect(id) {
+  if (selectedDrills.has(id)) selectedDrills.delete(id);
+  else selectedDrills.add(id);
+  document.getElementById('share-bar-count').textContent = `${selectedDrills.size} selected`;
+  // update card highlight
+  document.querySelectorAll('.drill-card').forEach(c => {
+    if (c.dataset.id === id) c.classList.toggle('selected', selectedDrills.has(id));
+  });
+}
+
+function selectAllVisible() {
+  const visibleIds = getFilteredDrills().map(d => d.id);
+  visibleIds.forEach(id => selectedDrills.add(id));
+  document.getElementById('share-bar-count').textContent = `${selectedDrills.size} selected`;
+  renderDrills();
+}
+
+function clearSelection() {
+  selectedDrills.clear();
+  document.getElementById('share-bar-count').textContent = '0 selected';
+  renderDrills();
+}
+
+function getFilteredDrills() {
+  return state.drills.filter(d => {
+    if (currentDrillFilter === 'all') return true;
+    if (currentDrillFilter === 'fire') return d.rating === 'fire';
+    return d.category === currentDrillFilter;
+  });
+}
+
+function drillsToText(drills) {
+  if (!drills.length) return 'No drills to share.';
+  const lines = ['🏀 COACHPLAN — DRILL LIBRARY', ''];
+  // Group by category
+  const grouped = {};
+  drills.forEach(d => {
+    const cat = CATEGORY_LABELS[d.category] || d.category;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(d);
+  });
+  Object.entries(grouped).forEach(([cat, ds]) => {
+    lines.push(`── ${cat.toUpperCase()} ──`);
+    ds.forEach(d => {
+      lines.push(`\n📌 ${d.name}${d.rating ? ' ' + {fire:'🔥',good:'👍',meh:'😐',drop:'👎'}[d.rating] : ''}`);
+      if (d.notes) lines.push(`   ${d.notes}`);
+      if (d.link)  lines.push(`   🔗 ${d.linkLabel || d.link}: ${d.link}`);
+      const teams = (d.teams||[]).map(t => t==='u12'?'U12':t==='u14'?'U14':'Social').join(', ');
+      if (teams) lines.push(`   Teams: ${teams}`);
+    });
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function shareSelected() {
+  const drills = state.drills.filter(d => selectedDrills.has(d.id));
+  if (!drills.length) { showToast('No drills selected'); return; }
+  doShare(drills);
+}
+
+function shareAllDrills() {
+  if (!state.drills.length) { showToast('No drills in library yet'); return; }
+  doShare(state.drills);
+}
+
+function shareSingleDrill(id) {
+  const drill = state.drills.find(d => d.id === id);
+  if (drill) doShare([drill]);
+}
+
+function doShare(drills) {
+  const text = drillsToText(drills);
+  if (navigator.share) {
+    navigator.share({ title: 'CoachPlan Drills', text }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard')).catch(() => showToast('Could not copy'));
 }
 
 const RATING_META = {
@@ -980,11 +1155,7 @@ function toggleRating(drillId, rating) {
 
 function renderDrills() {
   const grid = document.getElementById('drill-grid');
-  let drills = state.drills.filter(d => {
-    if (currentDrillFilter === 'all') return true;
-    if (currentDrillFilter === 'fire') return d.rating === 'fire';
-    return d.category === currentDrillFilter;
-  });
+  const drills = getFilteredDrills();
 
   document.getElementById('drill-count-tag').textContent = `${state.drills.length} drill${state.drills.length !== 1 ? 's' : ''}`;
 
@@ -1000,30 +1171,35 @@ function renderDrills() {
   grid.innerHTML = '';
   drills.forEach(drill => {
     const ratingClass = drill.rating ? `rated-${drill.rating}` : '';
-    const teams = (drill.teams || []).map(t => t === 'u12' ? 'U12' : t === 'u14' ? 'U14' : 'Social').join(', ') || '—';
+    const isSelected = selectedDrills.has(drill.id);
+    const teams = (drill.teams || []).map(id => teamName(id)).join(', ') || '—';
     const card = document.createElement('div');
-    card.className = `drill-card ${ratingClass}`;
+    card.className = `drill-card ${ratingClass}${isSelected ? ' selected' : ''}`;
+    card.dataset.id = drill.id;
+    if (selectMode) card.onclick = () => toggleDrillSelect(drill.id);
 
+    const catLabel = CATEGORY_LABELS[drill.category] || drill.category;
     const ratingBtns = Object.entries(RATING_META).map(([r, m]) =>
-      `<button class="rating-btn ${drill.rating === r ? 'active' : ''}" data-r="${r}" title="${m.label}" onclick="toggleRating('${drill.id}','${r}')">${m.emoji}</button>`
+      `<button class="rating-btn ${drill.rating === r ? 'active' : ''}" data-r="${r}" title="${m.label}" onclick="event.stopPropagation();toggleRating('${drill.id}','${r}')">${m.emoji}</button>`
     ).join('');
 
     card.innerHTML = `
       <div class="drill-card-header">
-        <div class="drill-card-name">${drill.name}</div>
-        <div class="rating-widget">${ratingBtns}</div>
+        <div class="drill-card-name">${selectMode ? `<span style="color:var(--orange);margin-right:6px;">${isSelected ? '☑' : '☐'}</span>` : ''}${drill.name}</div>
+        ${!selectMode ? `<div class="rating-widget">${ratingBtns}</div>` : ''}
       </div>
       <div class="drill-card-tags">
-        <span class="drill-tag drill-tag-${drill.category}">${drill.category}</span>
+        <span class="drill-tag drill-tag-${drill.category}">${catLabel}</span>
         ${drill.rating ? `<span style="font-size:12px;">${RATING_META[drill.rating].emoji}</span>` : ''}
       </div>
       ${drill.notes ? `<div class="drill-card-notes">${drill.notes}</div>` : ''}
-      ${drill.link ? `<div class="drill-card-link"><a href="${drill.link}" target="_blank">🔗 ${drill.linkLabel || 'View link'}</a></div>` : ''}
+      ${drill.link ? `<div class="drill-card-link"><a href="${drill.link}" target="_blank" onclick="event.stopPropagation()">🔗 ${drill.linkLabel || 'View link'}</a></div>` : ''}
       <div class="drill-card-teams">Teams: ${teams}</div>
-      <div class="drill-card-footer">
+      ${!selectMode ? `<div class="drill-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="shareSingleDrill('${drill.id}')">Share</button>
         <button class="btn btn-ghost btn-sm" onclick="openDrillModal('${drill.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteDrill('${drill.id}')">Delete</button>
-      </div>`;
+      </div>` : ''}`;
     grid.appendChild(card);
   });
 }
@@ -1034,9 +1210,13 @@ function openDrillModal(id) {
   document.getElementById('drill-modal-title').innerHTML = (drill ? 'Edit Drill' : 'Add Drill / Play') + ` <button class="modal-close" onclick="closeModal('modal-drill')">×</button>`;
   document.getElementById('drill-name').value = drill?.name || '';
   document.getElementById('drill-category').value = drill?.category || 'offense';
-  document.getElementById('dt-u12').checked   = !!(drill?.teams||[]).includes('u12');
-  document.getElementById('dt-u14').checked   = !!(drill?.teams||[]).includes('u14');
-  document.getElementById('dt-social').checked = !!(drill?.teams||[]).includes('social');
+  // Dynamic team checkboxes
+  const checksDiv = document.getElementById('drill-team-checks');
+  checksDiv.innerHTML = state.teams.map(t =>
+    `<label style="display:flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;">
+      <input type="checkbox" data-team="${t.id}" ${(drill?.teams||[]).includes(t.id)?'checked':''}> ${t.name}
+    </label>`
+  ).join('');
   document.getElementById('drill-notes').value = drill?.notes || '';
   document.getElementById('drill-link').value  = drill?.link || '';
   document.getElementById('drill-link-label').value = drill?.linkLabel || '';
@@ -1044,10 +1224,8 @@ function openDrillModal(id) {
 }
 
 function saveDrill() {
-  const teams = [];
-  if (document.getElementById('dt-u12').checked)    teams.push('u12');
-  if (document.getElementById('dt-u14').checked)    teams.push('u14');
-  if (document.getElementById('dt-social').checked) teams.push('social');
+  const teams = Array.from(document.querySelectorAll('#drill-team-checks input[type=checkbox]'))
+    .filter(c => c.checked).map(c => c.dataset.team);
   const name = document.getElementById('drill-name').value.trim();
   if (!name) { alert('Please enter a drill name.'); return; }
   const existing = currentDrillId ? state.drills.find(d => d.id === currentDrillId) : null;
@@ -1081,8 +1259,8 @@ function deleteDrill(id) {
 let currentPlayerId = null;
 
 function renderPlayers() {
-  const teamLabel = state.currentTeam === 'u12' ? 'U12' : state.currentTeam === 'u14' ? 'U14' : "Social Men's";
-  document.getElementById('player-team-label').textContent = teamLabel;
+  const tName = teamName(state.currentTeam);
+  document.getElementById('player-team-label').textContent = tName;
   const grid = document.getElementById('player-grid');
   const players = state.players.filter(p => p.team === state.currentTeam);
   if (!players.length) {
@@ -1098,7 +1276,7 @@ function renderPlayers() {
     card.className = 'player-card';
     card.innerHTML = `
       <div class="player-card-name">${p.name}</div>
-      <div class="player-card-team">${teamLabel}</div>
+      <div class="player-card-team">${tName}</div>
       ${focuses.length ? `<ul class="player-focus-list">${focuses.map(f=>`<li>${f}</li>`).join('')}</ul>` : '<div style="font-size:12px;color:var(--text-dim)">No focuses set.</div>'}
       ${p.notes ? `<div style="font-size:12px;color:var(--text-dim);margin-top:8px">${p.notes}</div>` : ''}
       <div class="player-card-footer">
@@ -1114,7 +1292,9 @@ function openPlayerModal(id) {
   const p = id ? state.players.find(p => p.id === id) : null;
   document.getElementById('player-modal-title').innerHTML = (p ? 'Edit Player' : 'Add Player') + ` <button class="modal-close" onclick="closeModal('modal-player')">×</button>`;
   document.getElementById('player-name').value   = p?.name || '';
-  document.getElementById('player-team').value   = p?.team || state.currentTeam;
+  // Build dynamic team select
+  const sel = document.getElementById('player-team');
+  sel.innerHTML = state.teams.map(t => `<option value="${t.id}" ${(p?.team||state.currentTeam)===t.id?'selected':''}>${t.name}</option>`).join('');
   document.getElementById('player-focuses').value = p?.focuses || '';
   document.getElementById('player-notes').value  = p?.notes || '';
   openModal('modal-player');
@@ -1165,6 +1345,77 @@ function showToast(msg) {
   t.textContent = msg + ' ✓';
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===================== TEAMS MANAGEMENT =====================
+function openTeamsModal() {
+  renderTeamsList();
+  openModal('modal-teams');
+}
+
+function renderTeamsList() {
+  const list = document.getElementById('teams-list');
+  list.innerHTML = '';
+  state.teams.forEach((team, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--court);border-radius:6px;padding:8px 10px;';
+    row.innerHTML = `
+      <input type="text" value="${team.name}" data-id="${team.id}"
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:4px 2px;font-size:14px;color:var(--chalk);"
+        onchange="renameTeam('${team.id}', this.value)">
+      ${state.teams.length > 1
+        ? `<button class="btn btn-danger btn-sm" onclick="removeTeam('${team.id}')">Remove</button>`
+        : `<span style="font-size:11px;color:var(--text-dim);padding:0 4px;">Only team</span>`
+      }`;
+    list.appendChild(row);
+  });
+  document.getElementById('new-team-name').value = '';
+}
+
+function renameTeam(id, newName) {
+  newName = newName.trim();
+  if (!newName) return;
+  const team = state.teams.find(t => t.id === id);
+  if (team) team.name = newName;
+  renderTeamTabs();
+  renderAll();
+  save();
+  showToast('Team renamed');
+}
+
+function addTeam() {
+  const name = document.getElementById('new-team-name').value.trim();
+  if (!name) { alert('Please enter a team name.'); return; }
+  const id = 'team_' + Date.now();
+  state.teams.push({ id, name });
+  if (!state.blocks[id]) state.blocks[id] = {};
+  state.currentTeam = id;
+  renderTeamsList();
+  renderTeamTabs();
+  renderAll();
+  save();
+  showToast('Team added');
+}
+
+function removeTeam(id) {
+  if (state.teams.length <= 1) { alert('You need at least one team.'); return; }
+  const team = state.teams.find(t => t.id === id);
+  if (!confirm(`Remove "${team?.name}"? This will delete all session plans and players for this team.`)) return;
+  // Remove all session data for this team
+  Object.keys(state.sessions).forEach(k => { if (k.startsWith(id + '_')) delete state.sessions[k]; });
+  // Remove players
+  state.players = state.players.filter(p => p.team !== id);
+  // Remove block
+  delete state.blocks[id];
+  // Remove team
+  state.teams = state.teams.filter(t => t.id !== id);
+  // Switch team if needed
+  if (state.currentTeam === id) state.currentTeam = state.teams[0].id;
+  renderTeamsList();
+  renderTeamTabs();
+  renderAll();
+  save();
+  showToast('Team removed');
 }
 
 // ===================== INIT =====================
